@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#EA580C" />
+    </linearGradient>
+    <linearGradient id="canopyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FACC15" />
+      <stop offset="100%" stop-color="#EAB308" />
+    </linearGradient>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#16A34A" />
+      <stop offset="100%" stop-color="#15803D" />
+    </linearGradient>
+  </defs>
+  <!-- Background Squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect x="20" y="20" width="472" height="472" rx="96" fill="none" stroke="#FEF08A" stroke-width="8" stroke-dasharray="24 12" opacity="0.6" />
+  
+  <!-- Road shadow -->
+  <ellipse cx="256" cy="410" rx="170" ry="26" fill="#7C2D12" opacity="0.45" />
+
+  <!-- Cute Auto-Rickshaw Side/3-Quarter Illustration -->
+  <!-- Rear Cabin / Canopy (Yellow) -->
+  <path d="M116 240 C116 148, 168 120, 290 120 C354 120, 386 156, 396 240 Z" fill="url(#canopyGrad)" stroke="#1C1008" stroke-width="14" stroke-linejoin="round" />
+  <!-- Marigold decorative stripe on canopy -->
+  <path d="M132 192 Q256 175 382 192" fill="none" stroke="#DC2626" stroke-width="10" stroke-linecap="round" />
+  <!-- Windshield -->
+  <path d="M312 146 L376 146 L392 228 L312 228 Z" fill="#38BDF8" stroke="#1C1008" stroke-width="12" stroke-linejoin="round" />
+  <line x1="332" y1="162" x2="352" y2="210" stroke="#E0F2FE" stroke-width="8" stroke-linecap="round" />
+
+  <!-- Lower Body (Classic Indian Green) -->
+  <path d="M104 240 L404 240 C420 240, 430 265, 424 328 L104 328 C94 295, 96 256, 104 240 Z" fill="url(#bodyGrad)" stroke="#1C1008" stroke-width="14" stroke-linejoin="round" />
+  <!-- Yellow trim stripe -->
+  <rect x="108" y="268" width="310" height="20" rx="8" fill="#FACC15" stroke="#1C1008" stroke-width="8" />
+
+  <!-- Headlight -->
+  <circle cx="426" cy="276" r="22" fill="#FEF08A" stroke="#1C1008" stroke-width="12" />
+  <circle cx="426" cy="276" r="10" fill="#FFFFFF" />
+
+  <!-- Front Mudguard -->
+  <path d="M358 340 C372 296, 434 296, 446 340 Z" fill="#FACC15" stroke="#1C1008" stroke-width="12" stroke-linejoin="round" />
+
+  <!-- Rear Wheel -->
+  <circle cx="164" cy="356" r="48" fill="#27272A" stroke="#1C1008" stroke-width="14" />
+  <circle cx="164" cy="356" r="22" fill="#FACC15" stroke="#1C1008" stroke-width="8" />
+  <circle cx="164" cy="356" r="8" fill="#DC2626" />
+
+  <!-- Front Wheel -->
+  <circle cx="398" cy="356" r="46" fill="#27272A" stroke="#1C1008" stroke-width="14" />
+  <circle cx="398" cy="356" r="20" fill="#FACC15" stroke="#1C1008" stroke-width="8" />
+  <circle cx="398" cy="356" r="7" fill="#DC2626" />
+
+  <!-- Speed Lines / Chai Nitro Sparks -->
+  <line x1="42" y1="210" x2="88" y2="210" stroke="#FEF08A" stroke-width="12" stroke-linecap="round" />
+  <line x1="28" y1="260" x2="76" y2="260" stroke="#FEF08A" stroke-width="12" stroke-linecap="round" />
+  <line x1="48" y1="310" x2="84" y2="310" stroke="#FEF08A" stroke-width="12" stroke-linecap="round" />
+</svg>

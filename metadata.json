@@ -1,0 +1,8 @@
+{
+  "name": "Auto Rally — Tuk-Tuk Time Trial",
+  "description": "A cute offline-ready auto-rickshaw racing game for phones and desktops. Drive 3 laps, collect coins and chai nitro power-ups, dodge obstacles, and pass your phone to beat your friends' best time.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
