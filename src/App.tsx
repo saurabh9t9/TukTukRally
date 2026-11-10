@@ -20,11 +20,8 @@ import { soundEngine } from './game/audio';
 import { TitleScreen } from './components/TitleScreen';
 import { HudSnapshot, PlayingHUD } from './components/PlayingHUD';
 import { FinishedRunSummary, StatusModals } from './components/StatusModals';
-import { PWAInstallModal } from './components/PWAInstallModal';
-import {
-  MobileOrientationGuard,
-  tryEnterFullscreenAndLandscape,
-} from './components/MobileOrientationGuard';
+import { SettingsModal } from './components/SettingsModal';
+import { MobileOrientationGuard } from './components/MobileOrientationGuard';
 import { usePWAInstall } from './utils/usePWAInstall';
 
 export default function App() {
@@ -43,7 +40,7 @@ export default function App() {
   );
   const [isMuted, setIsMuted] = useState<boolean>(() => soundEngine.isMuted());
   const [cameraMode, setCameraMode] = useState<CameraMode>('straight');
-  const [showInstallModal, setShowInstallModal] = useState<boolean>(false);
+  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [finishedSummary, setFinishedSummary] =
     useState<FinishedRunSummary | null>(null);
 
@@ -128,9 +125,6 @@ export default function App() {
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      void tryEnterFullscreenAndLandscape();
-    }
     setActiveTrack(selectedTrackIdRef.current);
     const fresh = createInitialRaceState('playing', selectedTrackIdRef.current);
     simRef.current = fresh;
@@ -182,6 +176,13 @@ export default function App() {
     }
   }, []);
 
+  const handleSelectCameraMode = useCallback((mode: CameraMode) => {
+    if (rendererRef.current) {
+      rendererRef.current.setCameraMode(mode);
+      setCameraMode(mode);
+    }
+  }, []);
+
   const handleTouchControlChange = useCallback(
     (
       control: 'accelerate' | 'brake' | 'left' | 'right',
@@ -212,15 +213,24 @@ export default function App() {
     const renderer = new WorldRenderer();
     rendererRef.current = renderer;
 
+    const getViewportDimensions = () => {
+      const vv = window.visualViewport;
+      const w = Math.round(vv ? vv.width : window.innerWidth);
+      const h = Math.round(vv ? vv.height : window.innerHeight);
+      return { w: Math.max(1, w), h: Math.max(1, h) };
+    };
+
     const updateCanvasSize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const { w, h } = getViewportDimensions();
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
+      window.scrollTo(0, 0);
     };
     updateCanvasSize();
     window.addEventListener('resize', updateCanvasSize);
+    window.addEventListener('orientationchange', updateCanvasSize);
+    window.visualViewport?.addEventListener('resize', updateCanvasSize);
 
     const onKeyDown = (e: KeyboardEvent) => {
       // Ignore keyboard shortcuts if typing in friend name input
@@ -310,7 +320,7 @@ export default function App() {
     window.addEventListener('blur', onBlurOrVisibility);
     document.addEventListener('visibilitychange', onBlurOrVisibility);
 
-      let rafId = 0;
+    let rafId = 0;
     let cancelled = false;
     let lastTime = performance.now();
 
@@ -488,15 +498,18 @@ export default function App() {
       renderer.updateVisualEffects(sim, dt, timeSec);
 
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const { w, h } = getViewportDimensions();
+      if (
+        canvas.width !== Math.floor(w * dpr) ||
+        canvas.height !== Math.floor(h * dpr)
+      ) {
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+      }
+
       ctx.save();
       ctx.scale(dpr, dpr);
-      renderer.render(
-        ctx,
-        window.innerWidth,
-        window.innerHeight,
-        sim,
-        timeSec
-      );
+      renderer.render(ctx, w, h, sim, timeSec);
       ctx.restore();
 
       if (!cancelled) {
@@ -510,6 +523,8 @@ export default function App() {
       cancelled = true;
       window.cancelAnimationFrame(rafId);
       window.removeEventListener('resize', updateCanvasSize);
+      window.removeEventListener('orientationchange', updateCanvasSize);
+      window.visualViewport?.removeEventListener('resize', updateCanvasSize);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlurOrVisibility);
@@ -519,7 +534,7 @@ export default function App() {
   }, [clearHeldInputs, handlePauseToggle, initialAutostart, startNewRace, syncBodyPhase]);
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden bg-[#18120B] select-none">
+    <main className="fixed inset-0 h-full w-full overflow-hidden bg-[#18120B] select-none">
       {/* Isolated Full-Viewport Game Canvas */}
       <canvas
         ref={canvasRef}
@@ -538,8 +553,7 @@ export default function App() {
           onStartRace={startNewRace}
           isMuted={isMuted}
           onToggleMute={handleToggleMute}
-          onOpenInstallModal={() => setShowInstallModal(true)}
-          isOffline={!isOnline}
+          onOpenSettings={() => setShowSettingsModal(true)}
         />
       )}
 
@@ -553,6 +567,7 @@ export default function App() {
           cameraMode={cameraMode}
           onCycleCameraMode={handleCycleCameraMode}
           onToggleMute={handleToggleMute}
+          onOpenSettings={() => setShowSettingsModal(true)}
           onPause={handlePauseToggle}
           onRestart={startNewRace}
           timerTextRef={timerTextRef}
@@ -576,29 +591,24 @@ export default function App() {
         onResume={handlePauseToggle}
         onRestart={startNewRace}
         onReturnToTitle={handleReturnToTitle}
+        onOpenSettings={() => setShowSettingsModal(true)}
       />
 
-      {/* Mobile Portrait Rotate-Device Prompt, Auto-Fullscreen & iPhone Offline PWA Guide */}
-      <MobileOrientationGuard
-        isIOS={isIOS}
-        isInstalled={isInstalled}
-        isOnline={isOnline}
-        canNativePrompt={canNativePrompt}
-        onTriggerNativeInstall={() => {
-          void promptInstall();
-        }}
-      />
+      {/* Non-Intrusive Offline Status Indicator */}
+      <MobileOrientationGuard isOnline={isOnline} />
 
-      {/* iPhone & Android Offline PWA Install Modal */}
-      <PWAInstallModal
-        isOpen={showInstallModal}
-        onClose={() => setShowInstallModal(false)}
+      {/* Game Settings & iOS/Android Offline App Download Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        isMuted={isMuted}
+        onToggleMute={handleToggleMute}
+        cameraMode={cameraMode}
+        onSelectCameraMode={handleSelectCameraMode}
         canNativePrompt={canNativePrompt}
         isIOS={isIOS}
         isInstalled={isInstalled}
-        onTriggerNativeInstall={() => {
-          void promptInstall();
-        }}
+        onTriggerNativeInstall={promptInstall}
       />
     </main>
   );

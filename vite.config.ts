@@ -12,6 +12,7 @@ export default defineConfig(() => {
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: [
+          'offline-sw.js',
           'icon.svg',
           'apple-touch-icon.png',
           'pwa-192x192.png',
@@ -31,9 +32,8 @@ export default defineConfig(() => {
             'A cute offline auto-rickshaw racing game to pass around with friends on a train.',
           theme_color: '#F59E0B',
           background_color: '#18120B',
-          display: 'fullscreen',
-          display_override: ['fullscreen', 'standalone'],
-          orientation: 'landscape',
+          display: 'standalone',
+          orientation: 'any',
           start_url: '/',
           scope: '/',
           icons: [
@@ -58,12 +58,31 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
+          skipWaiting: true,
+          clientsClaim: true,
+          cleanupOutdatedCaches: true,
           maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
           globPatterns: [
             '**/*.{js,css,html,ico,png,jpg,jpeg,svg,woff,woff2}',
           ],
           navigateFallback: '/index.html',
+          navigateFallbackAllowlist: [/^\/.*/],
           runtimeCaching: [
+            {
+              urlPattern: /^https?:\/\/[^/]+\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'auto-rally-offline-cache',
+                networkTimeoutSeconds: 2,
+                expiration: {
+                  maxEntries: 300,
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
               handler: 'CacheFirst',
@@ -109,8 +128,7 @@ export default defineConfig(() => {
           ],
         },
         devOptions: {
-          enabled: true,
-          type: 'module',
+          enabled: false,
         },
       }),
     ],

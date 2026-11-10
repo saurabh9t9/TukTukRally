@@ -300,6 +300,10 @@ export class WorldRenderer {
     return this.cameraMode;
   }
 
+  public setCameraMode(mode: CameraMode): void {
+    this.cameraMode = mode;
+  }
+
   public cycleCameraMode(): CameraMode {
     if (this.cameraMode === 'straight') {
       this.cameraMode = 'horizon';
@@ -381,33 +385,66 @@ export class WorldRenderer {
       this.gantryBannerTex = createGantryBannerTexture();
       this.coinFaceTex = createRupeeCoinFaceTexture();
 
-      const loader = new THREE.TextureLoader();
-      loader.setCrossOrigin('anonymous');
-
-      this.loadTextureWithFallback(loader, ASSET_URLS.grass, 95, 95, (tex) => {
-        this.grassTex = tex;
-        if (this.groundMaterial) {
-          this.groundMaterial.map = tex;
-          this.groundMaterial.color.set('#A3E635');
-          this.groundMaterial.needsUpdate = true;
+      // Immediate procedural turf texture so offline / file:// builds always have rich grass detail
+      const grassCanvas = document.createElement('canvas');
+      grassCanvas.width = 256;
+      grassCanvas.height = 256;
+      const gCtx = grassCanvas.getContext('2d');
+      if (gCtx) {
+        gCtx.fillStyle = '#3F6212';
+        gCtx.fillRect(0, 0, 256, 256);
+        for (let i = 0; i < 2400; i++) {
+          const gx = (i * 73) % 256;
+          const gy = (i * 41 + Math.floor(i / 256) * 17) % 256;
+          gCtx.fillStyle = i % 2 === 0 ? '#4D7C0F' : '#365314';
+          gCtx.fillRect(gx, gy, 3, 3);
         }
-      });
+      }
+      const fallbackGrass = new THREE.CanvasTexture(grassCanvas);
+      fallbackGrass.wrapS = THREE.RepeatWrapping;
+      fallbackGrass.wrapT = THREE.RepeatWrapping;
+      fallbackGrass.repeat.set(95, 95);
+      fallbackGrass.colorSpace = THREE.SRGBColorSpace;
+      this.grassTex = fallbackGrass;
 
-      this.loadTextureWithFallback(loader, ASSET_URLS.water, 12, 8, (tex) => {
-        this.waterTex = tex;
-        if (this.lakeMaterial) {
-          this.lakeMaterial.map = tex;
-          this.lakeMaterial.needsUpdate = true;
-        }
-      });
+      if (
+        typeof window !== 'undefined' &&
+        window.location.protocol !== 'file:'
+      ) {
+        const loader = new THREE.TextureLoader();
+        loader.setCrossOrigin('anonymous');
 
-      this.loadTextureWithFallback(loader, ASSET_URLS.brick, 4, 2, (tex) => {
-        this.brickTex = tex;
-      });
+        this.loadTextureWithFallback(
+          loader,
+          ASSET_URLS.grass,
+          95,
+          95,
+          (tex) => {
+            this.grassTex = tex;
+            if (this.groundMaterial) {
+              this.groundMaterial.map = tex;
+              this.groundMaterial.color.set('#A3E635');
+              this.groundMaterial.needsUpdate = true;
+            }
+          }
+        );
 
-      this.loadTextureWithFallback(loader, ASSET_URLS.wood, 2, 2, (tex) => {
-        this.woodTex = tex;
-      });
+        this.loadTextureWithFallback(loader, ASSET_URLS.water, 12, 8, (tex) => {
+          this.waterTex = tex;
+          if (this.lakeMaterial) {
+            this.lakeMaterial.map = tex;
+            this.lakeMaterial.needsUpdate = true;
+          }
+        });
+
+        this.loadTextureWithFallback(loader, ASSET_URLS.brick, 4, 2, (tex) => {
+          this.brickTex = tex;
+        });
+
+        this.loadTextureWithFallback(loader, ASSET_URLS.wood, 2, 2, (tex) => {
+          this.woodTex = tex;
+        });
+      }
 
       // Distant Mountain & Stadium Horizon Ring
       this.buildHorizonBackdrop(scene);
